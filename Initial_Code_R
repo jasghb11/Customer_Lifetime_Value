@@ -1,0 +1,36 @@
+library(dplyr)
+library(readr)
+
+df_clv <- read.csv("/Users/jlee/Downloads/file.csv")
+
+df_clv$X.Do.Not.Modify..Modified.On <- NULL
+df_clv$X.Do.Not.Modify..Row.Checksum <- NULL
+df_clv$X.Do.Not.Modify..Opportunity <- NULL
+
+# for the purposes of this analysis, we're going to filter to only won deals
+
+won_clv <- df_clv %>% filter (Status == "Won")
+
+
+Creating an account level summary, segmenting our accounts to find a group level summary showing the first purchase date, last purchase date, and total revenue. We will then find the total tenure days by subtracting last by first date.
+
+The main purpose of this section is to prepare the data first for a Kaplan-Meier Survival Analysis to understand how much our customers churn from their initial engagements. 
+
+library(lubridate)
+
+won_clv$Date <- mdy_hm(won_clv$Actual.Close.Date)
+won_clv$Date <- as.Date(won_clv$Date)
+
+print(class(won_clv$Date))
+
+account_summary <- won_clv %>%
+  group_by(Account) %>%
+  summarise(
+    first_purchase = min(Date),
+    last_purchase = max(Date),
+    total_revenue = sum(Actual.Revenue),
+    n_transactions = n()
+  ) %>%
+  mutate(tenure_days = as.numeric(last_purchase - first_purchase))
+
+After performing the account segmentation, it's worth doing a quick sanity check to confirm that variables are assigned as expected. Fortunately in R this is easy by checking the account_summary files that's appeared in our RStudio environment. We can check that tenure days and the other new columns are active and accurate.
